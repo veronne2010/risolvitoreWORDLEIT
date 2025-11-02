@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="it" align="center">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suggeritore di Parole per Pietroppeter WORDLE IT</title>
+    <link rel="stylesheet" href="stile.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=search" />
+</head>
+<body>
+    <h1>Benvenuto nel Suggeritore di Parole per WORDLE IT</h1>
+    <p>Inserisci le lettere conosciute e quelle escluse per ricevere suggerimenti.</p>
+    <form id="motore-ricerca" onsubmit="apriParole(); return false;">
+        <fieldset>
+            <legend>Motore di ricerca parole</legend>
+            <div style="display: flex; gap: 10px; align-items: flex-end; justify-content: center;">
+                <div style="text-align:center;">
+                    <span style="font-size:12px;">1</span><br>
+                    <input class="lettera-box" type="text" name="lettera_1" maxlength="1" autocomplete="off" />
+                </div>
+                <div style="text-align:center;">
+                    <span style="font-size:12px;">2</span><br>
+                    <input class="lettera-box" type="text" name="lettera_2" maxlength="1" autocomplete="off" />
+                </div>
+                <div style="text-align:center;">
+                    <span style="font-size:12px;">3</span><br>
+                    <input class="lettera-box" type="text" name="lettera_3" maxlength="1" autocomplete="off" />
+                </div>
+                <div style="text-align:center;">
+                    <span style="font-size:12px;">4</span><br>
+                    <input class="lettera-box" type="text" name="lettera_4" maxlength="1" autocomplete="off" />
+                </div>
+                <div style="text-align:center;">
+                    <span style="font-size:12px;">5</span><br>
+                    <input class="lettera-box" type="text" name="lettera_5" maxlength="1" autocomplete="off" />
+                </div>
+            </div>
+            <br>
+            <label>Lettere da escludere:</label><br>
+            <div id="escludi-lett"></div>
+            <br>
+            <button type="submit" class="search-btn">
+                <span class="material-symbols-outlined">search</span> Cerca parole
+            </button>
+        </fieldset>
+    </form>
+    <script>
+    // Genera le checkbox per lettere da escludere con stile
+    const divEscludi = document.getElementById('escludi-lett');
+    for (let c = 65; c <= 90; c++) {
+        const letter = String.fromCharCode(c);
+        divEscludi.innerHTML += `<label class='check-label'><input type='checkbox' name='escludi' value='${letter}' class='check-box'>${letter}</label> `;
+    }
+
+    // Tabulazione automatica tra le textbox
+    const boxList = Array.from(document.querySelectorAll('.lettera-box'));
+    boxList.forEach((box, idx) => {
+        box.addEventListener('input', function(e) {
+            if (box.value.length === 1 && idx < boxList.length - 1) {
+                boxList[idx + 1].focus();
+            }
+        });
+        box.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && box.value === '' && idx > 0) {
+                boxList[idx - 1].focus();
+            }
+        });
+    });
+
+    function apriParole() {
+        const lettere = [];
+        for (let i = 1; i <= 5; i++) {
+            const val = document.querySelector(`[name=lettera_${i}]`).value || '_';
+            lettere.push(val.toUpperCase());
+        }
+        const escluse = Array.from(document.querySelectorAll("input[name='escludi']:checked")).map(cb => cb.value).join('');
+        const query = `giuste=${encodeURIComponent(lettere.join(''))}&escluse=${encodeURIComponent(escluse)}`;
+    window.location.href = `parole.html?${query}`;
+    }
+    </script>
+</body>
+<script>
+    // Script per gestire il suggeritore di parole
+    // Usa il file database.txt come database delle parole
+    const fs = require('fs');
+    const databasePath = 'database.txt';
+    function suggerisciParole(lettereConosciute) {
+        const parole = fs.readFileSync(databasePath, 'utf-8').split('\n');
+        return parole.filter(parola => {
+            for (let i = 0; i < lettereConosciute.length; i++) {
+                if (lettereConosciute[i] && parola[i] !== lettereConosciute[i]) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+    document.querySelector('form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const lettereConosciute = [
+            event.target.lettera_1.value,
+            event.target.lettera_2.value,
+            event.target.lettera_3.value,
+            event.target.lettera_4.value,
+            event.target.lettera_5.value
+        ];
+        const suggerimenti = suggerisciParole(lettereConosciute);
+        alert('Suggerimenti: ' + suggerimenti.join(', '));
+    });
+
+</script>
+</html>

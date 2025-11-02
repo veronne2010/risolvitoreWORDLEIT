@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Parole</title>
+    <link rel="stylesheet" href="stile.css">
+</head>
+<body>
+    <h1>Risultati ricerca parole</h1>
+    <div id="parole-list"></div>
+    <script>
+        // Funzione per ottenere i parametri dalla query string
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            const giuste = (params.get('giuste') || '_____').toUpperCase();
+            const escluse = (params.get('escluse') || '').toUpperCase();
+            return {giuste, escluse};
+        }
+
+        fetch('database.txt')
+            .then(response => response.text())
+            .then(text => {
+                const parole = text.split(/\r?\n/).filter(p => p.trim().length === 5);
+                const {giuste, escluse} = getQueryParams();
+                const filtrate = parole.filter(parola => {
+                    const parolaUp = parola.toUpperCase();
+                    // Filtra per lettere giuste (usa _ come jolly)
+                    for (let i = 0; i < 5; i++) {
+                        if (giuste[i] !== '_' && parolaUp[i] !== giuste[i]) return false;
+                    }
+                    // Escludi parole che contengono lettere escluse
+                    for (let c of escluse) {
+                        if (parolaUp.includes(c)) return false;
+                    }
+                    return true;
+                });
+                const container = document.getElementById('parole-list');
+                if (filtrate.length === 0) {
+                    container.textContent = 'Nessuna parola trovata con questi requisiti.';
+                } else {
+                    filtrate.forEach(parola => {
+                        const p = document.createElement('p');
+                        p.textContent = parola;
+                        container.appendChild(p);
+                    });
+                }
+            })
+            .catch(err => {
+                document.getElementById('parole-list').textContent = 'Errore nel caricamento delle parole.';
+            });
+    </script>
+</body>
+</html>
